@@ -61,14 +61,14 @@ const Data = mongoose.model("Data", dataSchema,'LLM EXPERIMANT RESULTS');
 
 // Routes
 
-const port = 3080;
+const port = process.env.PORT || 3080 ;
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const corsOptions = {
-  origin: `${baseUrl.client}`,
+  origin: `${baseUrl.deployedClient}`,
   credentials: true,
 };
 app.use(cors(corsOptions));
