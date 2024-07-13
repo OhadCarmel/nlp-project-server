@@ -242,6 +242,8 @@ async function getRandomDocuments() {
 app.get('/random-docs', async (req, res) => {
   try {
     console.log('got into random-docs', req);
+    res.header('Access-Control-Allow-Origin', 'https://ohadcarmel.github.io');
+    res.header('Access-Control-Allow-Credentials', 'true');
     const randomDocs = await getRandomDocuments();
     console.log('got random-docs from magnose', randomDocs);
     res.json(randomDocs);
