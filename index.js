@@ -14,6 +14,8 @@ const { MongoClient } = require('mongodb');
 
 const mongoose = require("mongoose");
 
+const useLocal = false;
+const url = useLocal ? baseUrl.client : baseUrl.deployedClient;
 // Replace <username>, <password>, and <dbname> with your credentials and database name
 const uri =
   "mongodb+srv://ohadca:xCFWpHIKSKIQzWUR@cluster0.yeyhgvl.mongodb.net/LLM?retryWrites=true&w=majority&appName=Cluster0";
@@ -68,7 +70,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const corsOptions = {
-  origin: `${baseUrl.deployedClient}`,
+  origin: `${url}`,
   // credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 
@@ -95,8 +97,10 @@ app.post("/submit", async (req, res) => {
 app.post("/submit-imageIteration", async (req, res) => {
   console.log("recived Data", req.body.imageIterations);
   console.log("recived Data", req.body.imageIterations['0']);
+  res.header('Access-Control-Allow-Origin', url);
+  res.header('Access-Control-Allow-Credentials', 'true');
   // ,'2','3','4','5','6','7','8','9'
-  const arr = ['0','1'];
+  const arr = ['0','1','2','3','4','5','6','7','8','9'];
   arr.forEach(async (index)=>{
     console.log("this is index", index);
     console.log(req.body.imageIterations[index]);
@@ -145,12 +149,6 @@ app.post("/submit-imageIteration", async (req, res) => {
   
 });
 
-app.get("/user", (req, res) => {
-  const userId = req.cookies?.userId || uuidv4();
-  res.cookie("userId", userId).send({ id: userId });
-});
-
-/////
 
 // const mongoUri = 'mongodb://localhost:27017';
 const dbName = 'LLM';
@@ -237,16 +235,21 @@ async function getRandomDocuments() {
     // await client.close();
   }
 }
-
+app.get("/user", (req, res) => {
+  const userId = uuidv4();
+  res.cookie("userId", userId).send({ id: userId });
+});
 // Endpoint to get 10 random documents
 app.get('/random-docs', async (req, res) => {
   try {
+    const userId = uuidv4();
+
     console.log('got into random-docs', req);
-    res.header('Access-Control-Allow-Origin', 'https://ohadcarmel.github.io');
+    res.header('Access-Control-Allow-Origin', url);
     res.header('Access-Control-Allow-Credentials', 'true');
     const randomDocs = await getRandomDocuments();
     console.log('got random-docs from magnose', randomDocs);
-    res.json(randomDocs);
+    res.json({randomDocs, userId});
   } catch (err) {
     console.log('random-docs error', err);
     res.status(500).json({ error: 'Failed to fetch data' });
@@ -260,65 +263,6 @@ app.get("/probes", (req, res) => {
     return;
   }
   res.send({ probes: db });
-});
-
-app.get("/books", (req, res) => {
-  let booksToReturn = Books;
-  const { after } = req.query;
-  if (after) {
-    booksToReturn = booksToReturn.filter(
-      (book) => book.publicationYear === after
-    );
-  }
-
-  res.send({ Books: booksToReturn });
-});
-
-app.post("/books", (req, res) => {
-  const userId = req.cookies?.userId;
-  if (!userId) {
-    res.status(403).end();
-    return;
-  }
-
-  const { book } = req.body;
-  if (!book) {
-    res.status(400).json({ message: "Book is missing" }).end();
-    return;
-  }
-
-  const { title, author, publicationYear, description } = book;
-  if (!(title && author && publicationYear && description)) {
-    res.status(400).json({ message: "Bad request" }).end();
-    return;
-  }
-
-  const newBook = {
-    title,
-    author,
-    publicationYear,
-    description,
-    id: uuidv4(),
-  };
-  Books.push(newBook);
-  res.send({ book: newBook }).status(200).end();
-});
-
-app.get("/books/:bookId", (req, res) => {
-  const userId = req.cookies?.userId;
-  if (!userId) {
-    res.status(403).end();
-    return;
-  }
-
-  const { bookId } = req.params;
-  const book = Books.find((book) => book.id === bookId);
-  if (!book) {
-    res.status(400).json({ message: "Book not found" }).end();
-    return;
-  }
-
-  res.send({ book });
 });
 
 app.listen(port, () => {
