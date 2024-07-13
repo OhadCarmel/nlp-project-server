@@ -241,10 +241,12 @@ async function getRandomDocuments() {
 // Endpoint to get 10 random documents
 app.get('/random-docs', async (req, res) => {
   try {
-
+    console.log('got into random-docs', req);
     const randomDocs = await getRandomDocuments();
+    console.log('got random-docs from magnose', randomDocs);
     res.json(randomDocs);
   } catch (err) {
+    console.log('random-docs error', err);
     res.status(500).json({ error: 'Failed to fetch data' });
   }
 });
